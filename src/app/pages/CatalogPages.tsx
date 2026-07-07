@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, ChevronRight, MessageCircle, Info, Shield, Check, Star } from 'lucide-react';
+import { ShoppingCart, Heart, ChevronRight, ChevronLeft, Eye, MessageCircle, Info, Shield, Check, Star } from 'lucide-react';
 
 // Common Types
 type Product = any; 
@@ -9,67 +9,198 @@ type Page = string;
 // Helper to format currency
 const fmt = (num: number) => `LKR ${num.toLocaleString()}`;
 
-function MobilePhoneCard({ p, onNav }: { p: any; onNav: (pg: string, p?: any) => void }) {
+function MobilePhoneCard({ p, onNav, onCart, wishlist, onWish }: {
+  p: any;
+  onNav: (pg: string, p?: any) => void;
+  onCart: (p: Product) => void;
+  wishlist: number[];
+  onWish: (id: number) => void;
+}) {
+  const [hov, setHov] = useState(false);
   const images = p.specs?.uploaded_images || [];
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
+  const isWished = wishlist.includes(p.id);
 
+  // Auto-carousel on hover
   useEffect(() => {
-    if (images.length > 1) {
+    if (images.length > 1 && hov) {
       const timer = setInterval(() => {
         setCurrentImgIdx(prev => (prev + 1) % images.length);
-      }, 3000);
+      }, 2500);
       return () => clearInterval(timer);
     }
-  }, [images.length]);
+  }, [images.length, hov]);
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length > 1) {
+      setCurrentImgIdx(prev => (prev + 1) % images.length);
+    }
+  };
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length > 1) {
+      setCurrentImgIdx(prev => (prev - 1 + images.length) % images.length);
+    }
+  };
+
+  const getColorHex = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes("titanium") || lower.includes("gray") || lower.includes("grey") || lower.includes("natural")) return "#A2A4A6";
+    if (lower.includes("white") || lower.includes("silver") || lower.includes("clear")) return "#FFFFFF";
+    if (lower.includes("black") || lower.includes("dark") || lower.includes("obsidian") || lower.includes("space")) return "#171717";
+    if (lower.includes("blue")) return "#3B82F6";
+    if (lower.includes("green")) return "#10B981";
+    if (lower.includes("purple") || lower.includes("vinca")) return "#8B5CF6";
+    if (lower.includes("yellow") || lower.includes("gold")) return "#EAB308";
+    if (lower.includes("red") || lower.includes("rose") || lower.includes("pink")) return "#EC4899";
+    return "#6B7280";
+  };
+
+  const displayPrice = p.storagePricing && p.storagePricing.length > 0
+    ? Math.min(...p.storagePricing.map((sp: any) => sp.price))
+    : p.price;
+
+  const isFromPrice = p.storagePricing && p.storagePricing.length > 0;
 
   return (
     <motion.div
-      className="bg-card border border-border rounded-[2rem] overflow-hidden cursor-pointer hover:shadow-xl hover:border-[#8B5CF6]/30 transition-all flex flex-col h-full"
+      className="group relative bg-card rounded-[2rem] overflow-hidden border border-border cursor-pointer flex flex-col h-full hover:shadow-lg transition-all duration-300 w-full"
       whileHover={{ y: -6 }}
+      onHoverStart={() => setHov(true)}
+      onHoverEnd={() => { setHov(false); setCurrentImgIdx(0); }}
       onClick={() => onNav("phone-details", p)}
     >
-      <div className="aspect-square flex items-center justify-center relative overflow-hidden" style={{ background: p.gradient }}>
+      {/* Image Area with light grey background */}
+      <div className="relative aspect-square flex items-center justify-center bg-[#F4F4F5] dark:bg-zinc-900 overflow-hidden transition-colors duration-300">
         <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%)" }} />
+        
         {images.length > 0 ? (
           <div className="w-full h-full relative z-10">
-            <img src={images[currentImgIdx]} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+            <img src={images[currentImgIdx]} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            
+            {/* Slider arrows on hover */}
+            {images.length > 1 && hov && (
+              <>
+                <button 
+                  onClick={handlePrevImage} 
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center z-20 backdrop-blur-sm transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={handleNextImage} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center z-20 backdrop-blur-sm transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {/* Carousel slider dots */}
             {images.length > 1 && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-20 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
                 {images.map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentImgIdx ? "bg-white scale-110" : "bg-white/40"}`} />
+                  <div key={i} className={`w-1.25 h-1.25 rounded-full transition-all ${i === currentImgIdx ? "bg-white scale-110" : "bg-white/40"}`} />
                 ))}
               </div>
             )}
           </div>
         ) : p.icon && (p.icon.startsWith("data:image") || p.icon.length > 50) ? (
-          <img src={p.icon} alt={p.name} className="w-2/3 h-2/3 object-contain relative z-10" />
+          <img src={p.icon} alt={p.name} className="w-2/3 h-2/3 object-contain relative z-10 transition-transform duration-500 group-hover:scale-110" />
         ) : (
-          <span className="text-7xl select-none relative z-10">{p.icon}</span>
+          <span className="text-7xl select-none relative z-10 transition-transform duration-500 group-hover:scale-110">{p.icon}</span>
         )}
+
+        {/* Badges (Top Left) */}
         <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
-          {p.badge && <span className="bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{p.badge}</span>}
-          {p.discount && <span className="bg-[#8B5CF6] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">-{p.discount}%</span>}
+          {p.discount && <span className="bg-[#8B5CF6] text-black text-[10px] font-black px-2.5 py-0.5 rounded-full">-{p.discount}%</span>}
+          {p.badge && <span className="bg-black/70 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">{p.badge}</span>}
+          {p.isOriginal && <span className="bg-white/95 text-gray-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">✓ Original</span>}
         </div>
+
+        {/* Wishlist Heart Icon (Top Right, shifted left) */}
+        <button
+          className={`absolute top-4 right-14 z-10 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-200 bg-white/80 text-gray-600 hover:bg-white`}
+          onClick={e => { e.stopPropagation(); onWish(p.id); }}
+        >
+          <Heart className="w-4 h-4" fill={isWished ? "red" : "none"} style={{ color: isWished ? "red" : "currentColor" }} />
+        </button>
+
+        {/* Quick View Button (Top Right) */}
+        <button
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black text-white hover:bg-[#8B5CF6] hover:text-black flex items-center justify-center transition-all shadow-md"
+          onClick={e => { e.stopPropagation(); onNav("phone-details", p); }}
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+
+        {/* Add to Cart Shopping Bag Button (Bottom Right) */}
+        <button
+          className="absolute bottom-4 right-4 z-10 w-9 h-9 rounded-full bg-black text-white hover:bg-[#8B5CF6] hover:text-black flex items-center justify-center transition-all shadow-md"
+          onClick={e => { e.stopPropagation(); onCart(p); }}
+        >
+          <ShoppingCart className="w-4 h-4" />
+        </button>
       </div>
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{p.brand}</div>
-        <h3 className="font-bold text-lg mb-2 text-foreground" style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>{p.name}</h3>
-        <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{p.description}</p>
-        <div className="flex justify-between items-end mt-auto pt-4 border-t border-border/50">
-          <div>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Prices from</span>
-            <span className="font-bold font-mono text-foreground text-base">{fmt(p.price)}</span>
+
+      {/* Centered Details & Info */}
+      <div className="p-5 flex flex-col flex-1 items-center text-center">
+        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">{p.brand}</span>
+        <h3 className="font-bold text-foreground text-sm line-clamp-1 mb-1" style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>{p.name}</h3>
+        
+        {/* Price Tag */}
+        <div className="mt-1">
+          <span className="text-xs text-muted-foreground font-semibold block font-mono">
+            {isFromPrice ? "From " : ""}{fmt(displayPrice)}
+          </span>
+          {p.originalPrice && (
+            <span className="text-[10px] text-muted-foreground line-through block font-mono">
+              {fmt(p.originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Color Chips/Swatches */}
+        {p.availableColors && p.availableColors.length > 0 && (
+          <div className="flex items-center justify-center gap-1 mt-3">
+            {p.availableColors.slice(0, 4).map((c: string, idx: number) => (
+              <div
+                key={idx}
+                className="w-3.5 h-3.5 rounded-full border border-border shadow-xs"
+                style={{ backgroundColor: getColorHex(c) }}
+                title={c}
+              />
+            ))}
+            {p.availableColors.length > 4 && (
+              <span className="text-[9px] text-muted-foreground font-bold pl-0.5">+{p.availableColors.length - 4}</span>
+            )}
           </div>
-          <button className="px-4 py-2.5 bg-foreground text-background font-bold rounded-xl text-xs hover:bg-[#8B5CF6] hover:text-black transition-all">
-            View Options
-          </button>
+        )}
+
+        {/* Stock Level Badge */}
+        <div className="mt-3 text-[9px] font-bold uppercase tracking-wider">
+          {p.stock <= 0 ? (
+            <span className="text-red-500">Out of Stock</span>
+          ) : p.specs?.showStockCount === true ? (
+            <span className="text-[#8B5CF6]">{p.stock} available</span>
+          ) : (
+            <span className="text-green-500">✓ In Stock</span>
+          )}
         </div>
       </div>
     </motion.div>
   );
 }
 
-export function MobilePhonesPage({ onNav, products }: { onNav: (p: Page, prod?: Product) => void; products: Product[] }) {
+export function MobilePhonesPage({ onNav, products, onCart, wishlist, onWish }: { 
+  onNav: (p: Page, prod?: Product) => void; 
+  products: Product[]; 
+  onCart: (p: Product) => void;
+  wishlist: number[];
+  onWish: (id: number) => void;
+}) {
   const [selectedBrand, setSelectedBrand] = useState("All");
   const [storageFilter, setStorageFilter] = useState("All");
   
@@ -113,13 +244,13 @@ export function MobilePhonesPage({ onNav, products }: { onNav: (p: Page, prod?: 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
          {filtered.length > 0 ? (
-           filtered.map(p => (
-             <MobilePhoneCard key={p.id} p={p} onNav={onNav} />
-           ))
+            filtered.map(p => (
+              <MobilePhoneCard key={p.id} p={p} onNav={onNav} onCart={onCart} wishlist={wishlist} onWish={onWish} />
+            ))
          ) : (
-           <div className="col-span-full text-center py-16 text-muted-foreground font-semibold bg-card border border-border rounded-3xl">
-             No smartphones matching the selected filters were found.
-           </div>
+            <div className="col-span-full text-center py-16 text-muted-foreground font-semibold bg-card border border-border rounded-3xl">
+              No smartphones matching the selected filters were found.
+            </div>
          )}
       </div>
     </div>

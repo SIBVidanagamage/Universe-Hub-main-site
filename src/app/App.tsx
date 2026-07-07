@@ -57,13 +57,19 @@ const mapDbProductToProduct = (db: any): Product => ({
   icon: db.icon,
   description: db.description,
   specs: db.specs || {},
-  isFlashSale: db.is_flash_sale,
-  tags: db.tags || [],
+  isFlashSale: db.specs?.isFlashSale ?? false,
+  tags: db.specs?.tags || [],
   availableColors: db.available_colors || [],
   storagePricing: db.storage_pricing || []
 });
 
 const mapProductToDbProduct = (p: Product) => {
+  const specsPayload = {
+    ...(p.specs || {}),
+    isFlashSale: p.isFlashSale ?? false,
+    tags: p.tags || []
+  };
+
   const payload: any = {
     id: p.id,
     name: p.name,
@@ -82,9 +88,7 @@ const mapProductToDbProduct = (p: Product) => {
     gradient: p.gradient || "linear-gradient(135deg, #1e1b4b, #311042)",
     icon: p.icon || "📦",
     description: p.description || "",
-    specs: p.specs || {},
-    is_flash_sale: p.isFlashSale ?? false,
-    tags: p.tags || [],
+    specs: specsPayload,
     available_colors: p.availableColors || [],
     storage_pricing: p.storagePricing || []
   };
@@ -270,7 +274,7 @@ function ProductCard({ product, onCart, wishlist, onWish, onNav }: {
 
   return (
     <motion.div
-      className="group relative bg-card rounded-[2rem] overflow-hidden border border-border cursor-pointer flex flex-col w-[260px] sm:w-[280px] h-full hover:shadow-lg transition-all duration-300"
+      className="group relative bg-card rounded-[2rem] overflow-hidden border border-border cursor-pointer flex flex-col w-full h-full hover:shadow-lg transition-all duration-300"
       whileHover={{ y: -6 }}
       onHoverStart={() => setHov(true)}
       onHoverEnd={() => { setHov(false); setCurrentImgIdx(0); }}
@@ -586,7 +590,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
 // ─── Floating Buttons ─────────────────────────────────────────────────────────
 function FloatingButtons({ onNav, cartCount }: { onNav: (p: Page) => void; cartCount: number }) {
   return (
-    <div className="fixed bottom-6 right-4 z-40 flex flex-col gap-3 items-end">
+    <div className="fixed bottom-20 md:bottom-6 right-4 z-40 flex flex-col gap-3 items-end">
       <motion.button
         onClick={() => onNav("cart")}
         className="relative w-12 h-12 rounded-full bg-foreground text-background shadow-2xl flex items-center justify-center hover:bg-[#8B5CF6] hover:text-black transition-all duration-200"
@@ -696,6 +700,113 @@ function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
   );
 }
 
+// ─── Live Order Ticker ────────────────────────────────────────────────────────
+function LiveOrderTicker() {
+  const orders = [
+    { name: "Kasun P.", location: "Colombo", product: "AirPods Pro 2nd Gen", time: "2 mins ago", emoji: "🎧" },
+    { name: "Dilini F.", location: "Kandy", product: "Apple MagSafe Charger", time: "5 mins ago", emoji: "🔋" },
+    { name: "Ashan R.", location: "Galle", product: "iPhone 15 Pro (256GB)", time: "8 mins ago", emoji: "📱" },
+    { name: "Sachini J.", location: "Negombo", product: "Nothing Ear (2)", time: "12 mins ago", emoji: "◎" },
+    { name: "Nuwan S.", location: "Matara", product: "JBL Flip 6 Speaker", time: "15 mins ago", emoji: "🔊" },
+    { name: "Chamari K.", location: "Jaffna", product: "Galaxy S24 Ultra", time: "18 mins ago", emoji: "📲" },
+  ];
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIdx(p => (p + 1) % orders.length), 4000);
+    return () => clearInterval(timer);
+  }, []);
+  const o = orders[idx];
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="relative w-2 h-2 rounded-full bg-[#10B981]">
+          <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping" />
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={idx} 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-2 text-sm"
+          >
+            <span className="text-lg">{o.emoji}</span>
+            <span className="text-foreground font-semibold">{o.name}</span>
+            <span className="text-muted-foreground">from {o.location} purchased</span>
+            <span className="text-[#8B5CF6] font-bold">{o.product}</span>
+            <span className="text-muted-foreground/50 text-xs">— {o.time}</span>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+        <CheckCircle className="w-3.5 h-3.5 text-[#10B981]" />
+        Verified Purchase
+      </div>
+    </div>
+  );
+}
+
+// ─── Why Universe Hub (Social Proof Stats) ────────────────────────────────────
+function WhyUniverseHub() {
+  const stats = [
+    { value: "12,847", label: "Orders Delivered", icon: Package, color: "#8B5CF6" },
+    { value: "4.9★", label: "Average Rating", icon: Star, color: "#F59E0B" },
+    { value: "99.2%", label: "Satisfaction Rate", icon: Heart, color: "#EC4899" },
+    { value: "24hr", label: "Avg. Delivery Time", icon: Truck, color: "#10B981" },
+  ];
+  const guarantees = [
+    { icon: Shield, title: "Authenticity Guarantee", desc: "Every product is verified original with official serial numbers" },
+    { icon: RotateCcw, title: "7-Day Easy Returns", desc: "Changed your mind? Full refund within 7 days, no questions asked" },
+    { icon: Award, title: "Official Brand Warranty", desc: "All products come with manufacturer warranty — not seller warranty" },
+    { icon: CreditCard, title: "Secure Payments", desc: "Pay via VISA, MasterCard, bank transfer, or cash on delivery" },
+  ];
+  return (
+    <div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        {stats.map(({ value, label, icon: Icon, color }, i) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="relative p-6 rounded-3xl bg-card border border-border text-center group hover:border-[#8B5CF6]/30 transition-all overflow-hidden"
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: `radial-gradient(circle at 50% 50%, ${color}10, transparent 70%)` }} />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: `${color}15` }}>
+                <Icon className="w-5 h-5" style={{ color }} />
+              </div>
+              <div className="text-2xl font-black text-foreground mb-1" style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>{value}</div>
+              <div className="text-xs text-muted-foreground font-medium">{label}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      {/* Guarantees Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {guarantees.map(({ icon: Icon, title, desc }, i) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + i * 0.1 }}
+            className="flex items-start gap-4 p-5 rounded-2xl bg-card border border-border hover:border-[#8B5CF6]/20 transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 flex items-center justify-center shrink-0 group-hover:bg-[#8B5CF6]/20 transition-colors">
+              <Icon className="w-5 h-5 text-[#8B5CF6]" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-foreground mb-1">{title}</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">{desc}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Home Page ────────────────────────────────────────────────────────────────
 function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
   onNav: (p: Page, prod?: Product) => void; products: Product[]; onCart: (p: Product) => void;
@@ -711,18 +822,42 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
   return (
     <div>
       {/* Hero */}
-      <section className="relative min-h-[92vh] flex items-center">
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         {/* Subtle Grid pattern for glass feel */}
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+        
+        {/* Sparkle particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`sparkle-${i}`}
+            className="absolute w-1 h-1 bg-[#8B5CF6] rounded-full"
+            style={{ left: `${15 + i * 14}%`, top: `${20 + (i % 3) * 25}%` }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0, 1.5, 0],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 2 + i * 0.5,
+              repeat: Infinity,
+              delay: i * 0.8,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}>
+            {/* Live indicator badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-[#8B5CF6] text-sm font-semibold mb-6">
-              <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-pulse" />
+              <span className="relative w-2 h-2 rounded-full bg-[#8B5CF6]">
+                <span className="absolute inset-0 rounded-full bg-[#8B5CF6] animate-ping" />
+              </span>
               100% Original Products · Free Delivery Available
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-foreground mb-6" style={{ fontFamily: FD }}>
               Where Premium<br />
-              <span style={{ background: "linear-gradient(135deg, #8B5CF6, #00E676, #69F0AE)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <span className="animate-gradient-text" style={{ background: "linear-gradient(135deg, #8B5CF6, #06B6D4, #10B981, #8B5CF6)", backgroundSize: "200% auto", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 Meets Authentic
               </span>
             </h1>
@@ -732,8 +867,8 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
             <div className="flex flex-wrap gap-4 mb-10">
               <motion.button
                 onClick={() => onNav("shop")}
-                className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-base hover:bg-[#8B5CF6] hover:text-black transition-all duration-300"
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                className="glow-cta flex items-center gap-2 px-8 py-4 rounded-2xl bg-[#8B5CF6] text-black font-black text-base transition-all duration-300 hover:brightness-110"
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
               >Shop Now <ArrowRight className="w-5 h-5" /></motion.button>
               <motion.button
                 onClick={() => onNav("categories")}
@@ -741,39 +876,58 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
                 whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               >Browse Categories</motion.button>
             </div>
+            {/* Animated stat counters */}
             <div className="flex flex-wrap gap-6">
-              {[{ n:"12,000+", l:"Happy Customers" }, { n:"500+", l:"Products" }, { n:"100%", l:"Originals" }, { n:"24hr", l:"Fast Delivery" }].map(({ n, l }) => (
-                <div key={l}>
+              {[{ n:"12,000+", l:"Happy Customers" }, { n:"500+", l:"Products" }, { n:"100%", l:"Originals" }, { n:"24hr", l:"Fast Delivery" }].map(({ n, l }, i) => (
+                <motion.div key={l} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.1 }}>
                   <div className="text-2xl font-black text-foreground" style={{ fontFamily: FD }}>{n}</div>
                   <div className="text-xs text-muted-foreground font-medium">{l}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
-          {/* Hero Product Showcase */}
+          {/* Hero Product Showcase — Premium */}
           <motion.div
             className="relative flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
           >
             <div className="relative">
-              {/* Main card */}
-              <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-[3rem] flex items-center justify-center shadow-[0_40px_120px_rgba(0,0,0,0.3)] relative overflow-hidden" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6,#a855f7)" }}>
+              {/* Ambient glow behind card */}
+              <div className="absolute inset-0 rounded-[3rem] blur-3xl opacity-40" style={{ background: "radial-gradient(circle, rgba(139,92,246,0.5) 0%, rgba(99,102,241,0.3) 40%, transparent 70%)" }} />
+              
+              {/* Main card with product image */}
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-72 h-72 sm:w-80 sm:h-80 rounded-[3rem] flex items-center justify-center shadow-[0_40px_120px_rgba(139,92,246,0.3)] relative overflow-hidden"
+                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6,#a855f7)" }}
+              >
                 <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 60%)" }} />
-                <span className="text-9xl">🎧</span>
-              </div>
-              {/* Floating badges */}
+                {/* Shimmer sweep across card */}
+                <div className="absolute inset-0 shimmer-bg z-10" />
+                <img 
+                  src="/hero_airpods.png" 
+                  alt="AirPods Pro 2nd Generation" 
+                  className="w-full h-full object-cover relative z-[5]"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.fallback-emoji')?.classList.remove('hidden'); }}
+                />
+                <span className="fallback-emoji hidden text-9xl relative z-[5]">🎧</span>
+              </motion.div>
+              {/* Floating price badge */}
               <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute -top-4 -right-8 bg-white/5 backdrop-blur-3xl border border-white/20 rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10">
                 <div className="text-xs text-white/80 font-semibold mb-1">AirPods Pro 2nd Gen</div>
                 <div className="font-black text-lg text-white" style={{ fontFamily: FD, textShadow: '0 2px 10px rgba(255,255,255,0.4)' }}>LKR 82,500</div>
               </motion.div>
+              {/* Floating warranty badge */}
               <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 className="absolute -bottom-4 -left-8 bg-white/5 backdrop-blur-3xl border border-white/20 rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center"><Check className="w-5 h-5 text-white" /></div>
+                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 border border-[#10B981]/30 flex items-center justify-center"><Check className="w-5 h-5 text-[#10B981]" /></div>
                   <div><div className="text-xs font-black text-white tracking-wide" style={{ textShadow: '0 2px 10px rgba(255,255,255,0.4)' }}>Official Warranty</div><div className="text-[11px] text-white/80 font-medium mt-0.5">1 Year Apple</div></div>
                 </div>
               </motion.div>
+              {/* Floating rating badge */}
               <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 className="absolute top-1/2 -left-12 bg-white/5 backdrop-blur-3xl border border-white/20 rounded-2xl px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10">
                 <div className="flex items-center gap-2 mb-1">
@@ -782,56 +936,110 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
                 </div>
                 <div className="text-[11px] font-medium text-white/80">248 Reviews</div>
               </motion.div>
+              {/* NEW: Free delivery badge */}
+              <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                className="absolute -bottom-2 right-4 bg-[#10B981]/10 backdrop-blur-3xl border border-[#10B981]/30 rounded-2xl px-4 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#10B981]" />
+                  <span className="text-[11px] font-bold text-[#10B981]">Free Delivery</span>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
+        </div>
+
+        {/* Scrolling Brand Ticker */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border/30 bg-black/20 backdrop-blur-sm py-3 overflow-hidden">
+          <div className="animate-ticker flex items-center gap-12 whitespace-nowrap" style={{ width: 'max-content' }}>
+            {[...Array(2)].map((_, setIdx) => (
+              BRANDS.map((b, i) => (
+                <span key={`${setIdx}-${i}`} className="flex items-center gap-2 text-muted-foreground/50 font-bold text-sm tracking-widest uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6]/50" />
+                  {b.name}
+                </span>
+              ))
+            )).flat()}
+          </div>
         </div>
       </section>
 
       {/* Flash Sale */}
-      <section className="py-12 overflow-hidden" style={{ background: isDark ? "linear-gradient(135deg, #1a0a00, #2d1a00)" : "linear-gradient(135deg, #111111, #1f1f1f)" }}>
+      <section className="py-12 overflow-hidden relative" style={{ background: "linear-gradient(135deg, #1a0505, #2d0a0a, #1a0505)" }}>
+        {/* Pulsing border glow */}
+        <div className="absolute inset-0 rounded-none" style={{ boxShadow: 'inset 0 2px 0 rgba(239,68,68,0.3), inset 0 -2px 0 rgba(239,68,68,0.3)' }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1.5 rounded-xl bg-[#8B5CF6] flex items-center gap-2">
-                <Zap className="w-4 h-4 text-black fill-black" />
-                <span className="text-black font-black text-sm">FLASH SALE</span>
+            <div className="flex items-center gap-4">
+              <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-500 to-amber-500 flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
+                <Zap className="w-4 h-4 text-white fill-white animate-pulse" />
+                <span className="text-white font-black text-sm">FLASH SALE</span>
+              </div>
+              {/* Live selling indicator */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
+                <span className="relative w-2 h-2 rounded-full bg-red-500">
+                  <span className="absolute inset-0 rounded-full bg-red-500 animate-ping" />
+                </span>
+                <span className="text-red-400 text-xs font-bold">LIVE — Selling Fast</span>
               </div>
               <div className="text-white">
                 <div className="text-xs text-white/50 font-medium mb-0.5">Ends in</div>
                 <div className="flex items-center gap-1.5" style={{ fontFamily: FM }}>
                   {[pad(timer.h), pad(timer.m), pad(timer.s)].map((t, i) => (
                     <span key={i} className="flex items-center gap-1.5">
-                      <span className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white font-bold text-lg backdrop-blur-sm">{t}</span>
-                      {i < 2 && <span className="text-white/50 font-bold">:</span>}
+                      <span className="bg-red-500/20 border border-red-500/30 rounded-lg px-2.5 py-1 text-red-300 font-bold text-lg backdrop-blur-sm">{t}</span>
+                      {i < 2 && <span className="text-red-400/50 font-bold">:</span>}
                     </span>
                   ))}
                 </div>
               </div>
             </div>
-            <button onClick={() => onNav("shop")} className="flex items-center gap-2 text-sm font-semibold text-white/70 hover:text-[#8B5CF6] transition-colors">
-              View All <ChevronRight className="w-4 h-4" />
+            <button onClick={() => onNav("flashsale")} className="flex items-center gap-2 text-sm font-semibold text-white/70 hover:text-red-400 transition-colors">
+              View All Deals <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {flashItems.map(p => (
-              <motion.div key={p.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white/10 transition-all group"
-                whileHover={{ y: -3 }} onClick={() => onNav("product", p)}>
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0" style={{ background: p.gradient }}>{p.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] text-white/40 font-semibold uppercase tracking-widest mb-0.5">{p.brand}</div>
-                  <div className="text-sm font-bold text-white line-clamp-1 mb-1" style={{ fontFamily: FD }}>{p.name}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-[#8B5CF6]" style={{ fontFamily: FM }}>{fmt(p.price)}</span>
-                    {p.originalPrice && <span className="text-xs text-white/30 line-through" style={{ fontFamily: FM }}>{fmt(p.originalPrice)}</span>}
-                    {p.discount && <span className="px-1.5 py-0.5 rounded-full bg-[#8B5CF6] text-black text-[10px] font-bold">-{p.discount}%</span>}
+            {flashItems.map((p, idx) => {
+              const claimed = [67, 82, 45][idx % 3];
+              return (
+                <motion.div key={p.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-4 cursor-pointer hover:bg-white/10 hover:border-red-500/20 transition-all group"
+                  whileHover={{ y: -3 }} onClick={() => onNav("product", p)}>
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0 relative overflow-hidden" style={{ background: p.gradient }}>
+                      {p.icon}
+                      <div className="absolute inset-0 shimmer-bg" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] text-white/40 font-semibold uppercase tracking-widest mb-0.5">{p.brand}</div>
+                      <div className="text-sm font-bold text-white line-clamp-1 mb-1" style={{ fontFamily: FD }}>{p.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-red-400" style={{ fontFamily: FM }}>{fmt(p.price)}</span>
+                        {p.originalPrice && <span className="text-xs text-white/30 line-through" style={{ fontFamily: FM }}>{fmt(p.originalPrice)}</span>}
+                        {p.discount && <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">-{p.discount}%</span>}
+                      </div>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); onCart(p); }}
+                      className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-r from-red-500 to-amber-500 text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-                <button onClick={e => { e.stopPropagation(); onCart(p); }}
-                  className="shrink-0 w-9 h-9 rounded-xl bg-[#8B5CF6] text-black flex items-center justify-center hover:scale-110 transition-transform">
-                  <ShoppingCart className="w-4 h-4" />
-                </button>
-              </motion.div>
-            ))}
+                  {/* Scarcity progress bar */}
+                  <div className="mt-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-red-400/80 font-bold">🔥 {claimed}% Claimed</span>
+                      <span className="text-[10px] text-white/30 font-medium">Only {p.stock} left</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full rounded-full bg-gradient-to-r from-red-500 to-amber-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${claimed}%` }}
+                        transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -895,6 +1103,79 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
         </div>
       </section>
 
+      {/* ─── iPhone Spotlight Banner ─── */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="relative rounded-[2.5rem] overflow-hidden min-h-[400px] flex items-center" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 60%, #0a0a0a 100%)" }}>
+            {/* Ambient light effects */}
+            <div className="absolute inset-0">
+              <div className="absolute top-0 right-0 w-2/3 h-full opacity-20" style={{ background: "radial-gradient(circle at 80% 30%, rgba(99,102,241,0.5), transparent 60%)" }} />
+              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 opacity-15" style={{ background: "radial-gradient(circle at 20% 80%, rgba(139,92,246,0.5), transparent 60%)" }} />
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+            </div>
+            
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 sm:p-12 lg:p-16 items-center w-full">
+              {/* Content */}
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-widest mb-4">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  Now Available
+                </div>
+                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-4" style={{ fontFamily: FD }}>
+                  iPhone 15 Pro
+                </h2>
+                <p className="text-white/50 text-base mb-6 max-w-md leading-relaxed">
+                  Forged in aerospace-grade titanium. Featuring the A17 Pro chip, a 48MP camera system, and the all-new Action button.
+                </p>
+                {/* Feature chips */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {["A17 Pro Chip", "48MP Camera", "Titanium Design", "USB-C", "Action Button"].map(f => (
+                    <span key={f} className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-xs font-semibold backdrop-blur-sm">{f}</span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-white/40 font-medium">Starting from</div>
+                  <div className="text-2xl font-black text-white" style={{ fontFamily: FM }}>LKR 385,000</div>
+                </div>
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <motion.button 
+                    onClick={() => onNav("product", products.find(p => p.id === 13))}
+                    className="px-6 py-3 rounded-2xl bg-white text-black font-bold text-sm hover:bg-[#8B5CF6] hover:text-black transition-all"
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+                  >
+                    View iPhone 15 Pro
+                  </motion.button>
+                  <motion.button 
+                    onClick={() => onNav("phones")}
+                    className="px-6 py-3 rounded-2xl border border-white/20 text-white/80 font-bold text-sm hover:border-white/50 transition-all"
+                    whileHover={{ scale: 1.03 }}
+                  >
+                    All Phones
+                  </motion.button>
+                </div>
+              </div>
+              {/* Phone visual */}
+              <div className="hidden lg:flex items-center justify-center">
+                <motion.div 
+                  animate={{ y: [0, -15, 0], rotate: [0, 2, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="text-[12rem] select-none filter drop-shadow-[0_0_80px_rgba(99,102,241,0.3)]"
+                >
+                  📱
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Live Order Ticker ─── */}
+      <section className="py-6 border-y border-border/30 overflow-hidden bg-[#8B5CF6]/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <LiveOrderTicker />
+        </div>
+      </section>
+
       {/* Products */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -945,6 +1226,16 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
         </div>
       </section>
 
+      {/* ─── Why Universe Hub ─── */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#8B5CF6] mb-2">Why Choose Us</div>
+          <h2 className="text-3xl sm:text-4xl font-black text-foreground" style={{ fontFamily: FD }}>The Universe Hub Difference</h2>
+          <p className="text-muted-foreground mt-3 max-w-lg mx-auto text-sm">Every order is backed by our 4-pillar promise — authenticity, speed, support, and security.</p>
+        </div>
+        <WhyUniverseHub />
+      </section>
+
       {/* Testimonials */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
@@ -953,15 +1244,28 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {REVIEWS.map((r, i) => (
-            <motion.div key={r.id} className="bg-card border border-border rounded-3xl p-6 hover:shadow-xl hover:border-[#8B5CF6]/20 transition-all"
+            <motion.div key={r.id} className="bg-card border border-border rounded-3xl p-6 hover:shadow-xl hover:border-[#8B5CF6]/20 transition-all relative overflow-hidden group"
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-              <Stars rating={r.rating} />
-              <p className="text-sm text-foreground/80 leading-relaxed mt-3 mb-5">&ldquo;{r.review}&rdquo;</p>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#8B5CF6] to-emerald-600 flex items-center justify-center text-black text-xs font-black">{r.avatar}</div>
-                <div>
-                  <div className="text-sm font-bold text-foreground">{r.name}</div>
-                  <div className="text-xs text-muted-foreground">{r.location} · {r.date}</div>
+              {/* Subtle hover glow */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.08), transparent 60%)" }} />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <Stars rating={r.rating} />
+                  <span className="flex items-center gap-1 text-[10px] text-[#10B981] font-bold">
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </span>
+                </div>
+                <p className="text-sm text-foreground/80 leading-relaxed mb-4">&ldquo;{r.review}&rdquo;</p>
+                {/* Product tag */}
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] text-[10px] font-bold mb-4">
+                  <Tag className="w-3 h-3" /> {r.product}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#8B5CF6] to-emerald-600 flex items-center justify-center text-black text-xs font-black">{r.avatar}</div>
+                  <div>
+                    <div className="text-sm font-bold text-foreground">{r.name}</div>
+                    <div className="text-xs text-muted-foreground">{r.location} · {r.date}</div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1046,9 +1350,9 @@ function ShopPage({ onNav, products, onCart, wishlist, onWish, initialCategory =
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="text-sm text-muted-foreground">{sorted.length} products</div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-4 py-2 rounded-xl border border-border bg-card text-foreground text-sm font-medium outline-none cursor-pointer">
             <option value="featured">Featured</option>
             <option value="price-asc">Price: Low to High</option>
@@ -1098,6 +1402,12 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
   const [reviewerName, setReviewerName] = useState("");
   const [ratingVal, setRatingVal] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  // Reset image view index when browsing to another product
+  useEffect(() => {
+    setActiveImgIdx(0);
+  }, [product.id]);
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1135,7 +1445,7 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
           <div className="aspect-square rounded-3xl flex items-center justify-center relative overflow-hidden shadow-xl" style={{ background: product.gradient }}>
             <div className="absolute inset-0 opacity-25" style={{ background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent 60%)" }} />
             {product.specs?.uploaded_images && Array.isArray(product.specs.uploaded_images) && product.specs.uploaded_images.length > 0 ? (
-              <img src={product.specs.uploaded_images[0]} alt={product.name} className="w-full h-full object-cover relative z-10" />
+              <img src={product.specs.uploaded_images[activeImgIdx] || product.specs.uploaded_images[0]} alt={product.name} className="w-full h-full object-cover relative z-10" />
             ) : product.icon && (product.icon.startsWith("data:image") || product.icon.length > 50) ? (
               <img src={product.icon} alt={product.name} className="w-2/3 h-2/3 object-contain relative z-10" />
             ) : (
@@ -1150,20 +1460,26 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
             </div>
           </div>
           <div className="grid grid-cols-4 gap-3">
-            {[1,2,3,4].map(i => {
-              const galleryImg = product.specs?.uploaded_images?.[i-1];
-              return (
-                <div key={i} className={`aspect-square rounded-2xl flex items-center justify-center cursor-pointer border-2 overflow-hidden transition-all ${i === 1 ? "border-[#8B5CF6]" : "border-border hover:border-foreground/30"}`} style={{ background: product.gradient }}>
-                  {galleryImg ? (
-                    <img src={galleryImg} alt="gallery" className="w-full h-full object-cover" />
-                  ) : product.icon && (product.icon.startsWith("data:image") || product.icon.length > 50) ? (
-                    <img src={product.icon} alt="icon gallery" className="w-2/3 h-2/3 object-contain" />
-                  ) : (
-                    <span className="text-3xl">{product.icon}</span>
-                  )}
+            {product.specs?.uploaded_images && Array.isArray(product.specs.uploaded_images) && product.specs.uploaded_images.length > 0 ? (
+              product.specs.uploaded_images.map((img: string, idx: number) => (
+                <div
+                  key={idx}
+                  onClick={() => setActiveImgIdx(idx)}
+                  className={`aspect-square rounded-2xl flex items-center justify-center cursor-pointer border-2 overflow-hidden transition-all ${idx === activeImgIdx ? "border-[#8B5CF6] scale-[1.02]" : "border-border hover:border-foreground/30"}`}
+                  style={{ background: product.gradient }}
+                >
+                  <img src={img} alt="gallery" className="w-full h-full object-cover" />
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <div className="aspect-square rounded-2xl flex items-center justify-center border-2 border-[#8B5CF6] overflow-hidden bg-secondary">
+                {product.icon && (product.icon.startsWith("data:image") || product.icon.length > 50) ? (
+                  <img src={product.icon} alt="icon gallery" className="w-2/3 h-2/3 object-contain" />
+                ) : (
+                  <span className="text-3xl">{product.icon}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
         {/* Info */}
@@ -1654,7 +1970,7 @@ function AuthPage({ mode, onNav, onAdminLogin }: { mode: "login"|"register"; onN
         </div>
         <div className="bg-card border border-border rounded-3xl p-8 shadow-xl space-y-4">
           {mode === "register" && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {["First Name","Last Name"].map(l => <div key={l}><label className="text-xs font-medium text-muted-foreground mb-1 block">{l}</label><input placeholder={l} className="w-full px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground text-sm outline-none focus:border-[#8B5CF6]/50 transition-colors" /></div>)}
             </div>
           )}
@@ -2280,29 +2596,168 @@ function CosmicBackground() {
              backgroundSize: '250px 250px'
            }} 
       />
+
+      {/* Second star layer (deeper parallax) */}
+      <motion.div 
+           className="absolute inset-[-10%] opacity-30" 
+           animate={{ x: mousePos.x * -15, y: mousePos.y * -15 }}
+           transition={{ type: "spring", stiffness: 20, damping: 40 }}
+           style={{ 
+             backgroundImage: 'radial-gradient(1px 1px at 80px 50px, #8B5CF6, rgba(0,0,0,0)), radial-gradient(1px 1px at 120px 130px, #6366f1, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 200px 90px, #a78bfa, rgba(0,0,0,0)), radial-gradient(1px 1px at 30px 180px, #818cf8, rgba(0,0,0,0))', 
+             backgroundRepeat: 'repeat', 
+             backgroundSize: '300px 300px'
+           }} 
+      />
+
+      {/* Nebula Color Clouds */}
+      <motion.div
+        className="absolute top-[10%] right-[5%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full blur-[120px]"
+        animate={{ 
+          x: [0, 30, -20, 0],
+          y: [0, -20, 15, 0],
+          scale: [1, 1.1, 0.95, 1],
+          opacity: [0.08, 0.12, 0.06, 0.08],
+        }}
+        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+        style={{ background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, rgba(99,102,241,0.2) 40%, transparent 70%)" }}
+      />
+      <motion.div
+        className="absolute bottom-[20%] left-[10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full blur-[100px]"
+        animate={{ 
+          x: [0, -25, 20, 0],
+          y: [0, 20, -15, 0],
+          scale: [1, 0.95, 1.08, 1],
+          opacity: [0.06, 0.1, 0.05, 0.06],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        style={{ background: "radial-gradient(circle, rgba(236,72,153,0.3) 0%, rgba(139,92,246,0.15) 40%, transparent 70%)" }}
+      />
+
+      {/* Shooting Stars */}
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={`star-${i}`}
+          className="absolute"
+          style={{
+            left: `${10 + i * 30}%`,
+            top: `${5 + i * 20}%`,
+            width: '80px',
+            height: '1px',
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.8), transparent)',
+            borderRadius: '50px',
+            transform: 'rotate(-45deg)',
+          }}
+          animate={{
+            x: [0, 500],
+            y: [0, 500],
+            opacity: [0, 1, 1, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            delay: 8 + i * 12,
+            ease: "easeIn",
+            repeatDelay: 15 + i * 5,
+          }}
+        />
+      ))}
       
       {/* 3D Floating Moon (Parallax Wrapper) */}
       <motion.div 
-        animate={{ x: mousePos.x * 60, y: mousePos.y * 60, rotate: mousePos.x * 15 }}
+        animate={{ x: mousePos.x * 60, y: mousePos.y * 60, rotate: mousePos.x * 12 }}
         transition={{ type: "spring", stiffness: 30, damping: 20 }}
-        className="absolute top-[-10%] right-[-5%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] opacity-70 mix-blend-screen"
+        className="absolute top-[-8%] right-[-5%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] opacity-70 mix-blend-screen"
       >
         {/* Floating Animation */}
         <motion.div
-          animate={{ y: [0, -60, 0], rotate: [0, 8, 0], scale: [1, 1.05, 1] }} 
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="w-full h-full rounded-full"
-          style={{
-            background: 'radial-gradient(circle at 35% 35%, #ffffff 0%, #d4d4d8 15%, #71717a 40%, #18181b 80%, #000000 100%)',
-            boxShadow: '0 0 150px 40px rgba(139, 92, 246, 0.15), inset -40px -40px 80px rgba(0,0,0,0.9), inset 20px 20px 40px rgba(255,255,255,0.8)',
-            filter: 'blur(1px)'
-          }}
+          animate={{ y: [0, -40, 0], rotate: [0, 5, 0], scale: [1, 1.03, 1] }} 
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          className="w-full h-full rounded-full relative overflow-hidden"
         >
-          {/* Moon Craters (Subtle) */}
-          <div className="absolute top-[20%] left-[30%] w-[15%] h-[15%] rounded-full bg-black/20 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.5)] blur-[2px]" />
-          <div className="absolute top-[45%] left-[60%] w-[25%] h-[25%] rounded-full bg-black/30 shadow-[inset_4px_4px_10px_rgba(0,0,0,0.6)] blur-[3px]" />
-          <div className="absolute top-[65%] left-[25%] w-[12%] h-[12%] rounded-full bg-black/25 shadow-[inset_1px_1px_4px_rgba(0,0,0,0.5)] blur-[1.5px]" />
+          {/* Realistic Crescent Moon Texture (Unsplash CDN) */}
+          <img 
+            src="https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?q=80&w=600&auto=format&fit=crop" 
+            alt="Real Moon" 
+            className="w-full h-full object-cover rounded-full select-none pointer-events-none"
+          />
         </motion.div>
+      </motion.div>
+
+      {/* 3D Floating Saturn-like Planet */}
+      <motion.div 
+        animate={{ x: mousePos.x * -25, y: mousePos.y * -25 }}
+        transition={{ type: "spring", stiffness: 20, damping: 25 }}
+        className="absolute bottom-[10%] left-[2%] w-[35vw] h-[35vw] max-w-[320px] max-h-[320px] opacity-55 mix-blend-screen"
+      >
+        <motion.div
+          animate={{ y: [0, 30, 0], rotate: [0, -4, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="relative w-full h-full flex items-center justify-center"
+        >
+          {/* Rings Back Half (sandwiched behind planet) */}
+          <div 
+            className="absolute w-[140%] h-[32%] rounded-full border-[8px] border-amber-300/30 blur-[0.5px] z-0" 
+            style={{ 
+              transform: "rotate(-16deg)", 
+              boxShadow: "0 0 30px rgba(251, 191, 36, 0.15)",
+              clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)" 
+            }}
+          />
+          {/* Planet Sphere */}
+          <div 
+            className="w-2/3 h-2/3 rounded-full relative z-10"
+            style={{
+              background: 'radial-gradient(circle at 35% 35%, #fef08a 0%, #fbbf24 20%, #d97706 50%, #78350f 85%, #000000 100%)',
+              boxShadow: '0 0 80px 15px rgba(245, 158, 11, 0.1), inset -20px -20px 40px rgba(0,0,0,0.95), inset 12px 12px 25px rgba(255,255,255,0.75)',
+            }}
+          />
+          {/* Rings Front Half (sandwiched in front of planet) */}
+          <div 
+            className="absolute w-[140%] h-[32%] rounded-full border-[8px] border-amber-300/30 blur-[0.5px] z-20" 
+            style={{ 
+              transform: "rotate(-16deg)", 
+              boxShadow: "0 0 30px rgba(251, 191, 36, 0.15)",
+              clipPath: "polygon(0 50%, 100% 50%, 100% 100%, 0 100%)" 
+            }}
+          />
+        </motion.div>
+      </motion.div>
+
+      {/* Flying Rockets (slower/subtler) */}
+      <motion.div
+        className="absolute text-xl select-none z-10 opacity-60"
+        initial={{ x: "-10vw", y: "90vh", rotate: 35, opacity: 0 }}
+        animate={{
+          x: ["-10vw", "30vw", "110vw"],
+          y: ["90vh", "40vh", "-10vh"],
+          opacity: [0, 0.6, 0.6, 0]
+        }}
+        transition={{
+          duration: 35,
+          repeat: Infinity,
+          ease: "linear",
+          delay: 5
+        }}
+      >
+        🚀
+      </motion.div>
+
+      <motion.div
+        className="absolute text-base select-none z-10 opacity-40"
+        initial={{ x: "110vw", y: "70vh", rotate: -130, opacity: 0 }}
+        animate={{
+          x: ["110vw", "50vw", "-10vw"],
+          y: ["70vh", "30vh", "10vh"],
+          opacity: [0, 0.4, 0.4, 0]
+        }}
+        transition={{
+          duration: 40,
+          repeat: Infinity,
+          ease: "linear",
+          delay: 20
+        }}
+      >
+        🚀
       </motion.div>
       
       {/* Deep Space Gradients */}
@@ -2446,7 +2901,7 @@ export default function App() {
     // Load all data from Supabase tables
     const loadFromSupabase = async () => {
       try {
-        const { data: dbProducts, error: prodErr } = await supabase.from('products').select('*');
+        const { data: dbProducts, error: prodErr } = await supabase.from('products').select('*').order('id', { ascending: false });
         if (!prodErr) {
           if (dbProducts && dbProducts.length > 0) {
             setProducts(dbProducts.map(mapDbProductToProduct));
@@ -2751,7 +3206,7 @@ export default function App() {
   const isAdmin = page === "admin";
 
   return (
-    <div className={isDark ? "dark" : ""} style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div className={isDark || isAdmin ? "dark" : ""} style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <CosmicBackground />
       <div className="min-h-screen text-foreground transition-colors duration-300">
         {/* Toast */}
@@ -2767,7 +3222,7 @@ export default function App() {
           isAdminAuth ? (
             <AdminPage
               onNav={navigate}
-              isDark={isDark}
+              isDark={true}
               products={products}
               setProducts={setProducts}
               orders={orders}
@@ -2835,7 +3290,15 @@ export default function App() {
                   {page === "about" && <SimpleContentPage title="About Us" subtitle="Our Story" icon={Users} onNav={navigate} onShop={() => navigate("shop")} />}
                   {page === "contact" && <SimpleContentPage title="Contact Us" subtitle="Get in Touch" icon={Mail} onNav={navigate} onShop={() => navigate("shop")} />}
                   {page === "404" && <NewNotFoundPage onNav={navigate} />}
-                  {page === "phones" && <MobilePhonesPage onNav={navigate} products={products} />}
+                  {page === "phones" && (
+                    <MobilePhonesPage
+                      onNav={navigate}
+                      products={products}
+                      onCart={addToCart}
+                      wishlist={wishlist}
+                      onWish={toggleWishlist}
+                    />
+                  )}
                   {page === "phone-details" && selectedProduct && <PhoneDetailsPage product={selectedProduct} onNav={navigate} onCart={addToCart} />}
                   {page === "dashboard" && <CustomerDashboardPage onNav={navigate} />}
                   {page === "invoices" && <InvoicesPage orders={orders} />}
