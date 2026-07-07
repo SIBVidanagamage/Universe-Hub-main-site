@@ -170,7 +170,7 @@ function BrandProductCard({ p, onNav, onCart, wishlist, onWish }: {
             {/* Carousel slider dots */}
             {images.length > 1 && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-20 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                {images.map((_, i) => (
+                {(images as any[]).map((_: any, i: number) => (
                   <div key={i} className={`w-1.25 h-1.25 rounded-full transition-all ${i === currentImgIdx ? "bg-white scale-110" : "bg-white/40"}`} />
                 ))}
               </div>
