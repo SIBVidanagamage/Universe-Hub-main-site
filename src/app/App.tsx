@@ -309,7 +309,7 @@ function ProductCard({ product, onCart, wishlist, onWish, onNav }: {
             {/* Carousel slider dots */}
             {images.length > 1 && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-20 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                {images.map((_, i) => (
+                {(images as any[]).map((_: any, i: number) => (
                   <div key={i} className={`w-1.25 h-1.25 rounded-full transition-all ${i === currentImgIdx ? "bg-white scale-110" : "bg-white/40"}`} />
                 ))}
               </div>
@@ -391,7 +391,7 @@ function ProductCard({ product, onCart, wishlist, onWish, onNav }: {
         <div className="mt-3 text-[9px] font-bold uppercase tracking-wider">
           {product.stock <= 0 ? (
             <span className="text-red-500">Out of Stock</span>
-          ) : product.specs?.showStockCount === true ? (
+          ) : String(product.specs?.showStockCount) === "true" ? (
             <span className="text-[#8B5CF6]">{product.stock} available</span>
           ) : (
             <span className="text-green-500">✓ In Stock</span>
@@ -1083,7 +1083,7 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
           {CATEGORIES.map((cat, i) => {
             const Icon = cat.icon;
             return (
-              <motion.button key={cat.name} onClick={() => onNav("shop", undefined, cat.name)}
+              <motion.button key={cat.name} onClick={() => (onNav as any)("shop", undefined, cat.name)}
                 className="group relative overflow-hidden rounded-3xl p-6 flex flex-col items-center gap-3 border border-border bg-card hover:border-transparent transition-all duration-300"
                 whileHover={{ y: -4, scale: 1.01 }}
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -1213,7 +1213,7 @@ function HomePage({ onNav, products, onCart, wishlist, onWish, isDark }: {
           </div>
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
             {BRANDS.map(b => (
-              <motion.button key={b.name} onClick={() => onNav("brand", undefined, undefined, b.name)}
+              <motion.button key={b.name} onClick={() => (onNav as any)("brand", undefined, undefined, b.name)}
                 className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-[#8B5CF6]/30 hover:shadow-lg transition-all group"
                 whileHover={{ y: -3 }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: b.color + "15" }}>
@@ -1484,7 +1484,7 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
         </div>
         {/* Info */}
         <div>
-          <button onClick={() => onNav("brand", undefined, undefined, product.brand)} className="text-xs font-bold uppercase tracking-widest text-[#8B5CF6] mb-2 hover:underline block text-left">
+          <button onClick={() => (onNav as any)("brand", undefined, undefined, product.brand)} className="text-xs font-bold uppercase tracking-widest text-[#8B5CF6] mb-2 hover:underline block text-left">
             {product.brand}
           </button>
           <h1 className="text-3xl font-black text-foreground mb-4 leading-tight" style={{ fontFamily: FD }}>{product.name}</h1>
@@ -1508,7 +1508,7 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
             {[
               { icon: Shield, label: "Warranty", value: product.warranty },
               { icon: MapPin, label: "Version", value: product.countryVersion },
-              { icon: Package, label: "Stock", value: product.stock <= 0 ? "Out of Stock" : (product.specs?.showStockCount === true ? `${product.stock} units available` : "In Stock") },
+              { icon: Package, label: "Stock", value: product.stock <= 0 ? "Out of Stock" : (String(product.specs?.showStockCount) === "true" ? `${product.stock} units available` : "In Stock") },
               { icon: Truck, label: "Delivery", value: "Island-wide in 24hrs" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3 p-3 rounded-2xl bg-secondary border border-border">
@@ -1525,7 +1525,7 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
               <button onClick={() => setQty(q => Math.min(product.stock, q + 1))} className="w-9 h-9 rounded-xl bg-card flex items-center justify-center hover:bg-border transition-colors"><Plus className="w-4 h-4" /></button>
             </div>
             <span className="text-sm text-muted-foreground">
-              {product.stock <= 0 ? "Out of Stock" : (product.specs?.showStockCount === true ? `${product.stock} available` : "In Stock")}
+              {product.stock <= 0 ? "Out of Stock" : (String(product.specs?.showStockCount) === "true" ? `${product.stock} available` : "In Stock")}
             </span>
           </div>
           {/* Actions */}
@@ -1575,7 +1575,7 @@ function ProductDetailPage({ product, onNav, onCart, wishlist, onWish, products,
                 const defaultRevs = REVIEWS.filter(r => r.product === product.name || product.name.includes(r.product));
                 if (defaultRevs.length === 0) {
                   defaultRevs.push({
-                    id: "seeded-1",
+                    id: 999999 as any, location: "Colombo", product: product.name,
                     name: "Sajith Bandara",
                     rating: 5,
                     review: `Excellent product quality. Highly recommend this ${product.name} from Universe Hub. Excellent packaging and customer support.`,
@@ -2133,7 +2133,7 @@ function WishlistPage({ wishlist, products, onNav, onCart, onWish }: {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-4xl font-black text-foreground mb-8" style={{ fontFamily: FD }}>Wishlist <span className="text-muted-foreground text-2xl">({items.length})</span></h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-        {items.map(p => <ProductCard key={p.id} product={p} onCart={onCart} wishlist={wishlist} onWish={onWish} onNav={onNav} />)}
+        {items.map(p => <ProductCard key={p.id} product={p} onCart={onCart} wishlist={wishlist} onWish={onWish} onNav={onNav as any} />)}
       </div>
     </div>
   );
@@ -3221,7 +3221,7 @@ export default function App() {
         {isAdmin ? (
           isAdminAuth ? (
             <AdminPage
-              onNav={navigate}
+              onNav={navigate as any}
               isDark={true}
               products={products}
               setProducts={setProducts}
@@ -3234,20 +3234,20 @@ export default function App() {
               onUpdateProduct={updateProduct}
             />
           ) : (
-            <AuthPage mode="login" onNav={navigate} onAdminLogin={() => { setIsAdminAuth(true); navigate("admin"); }} />
+            <AuthPage mode="login" onNav={navigate as any} onAdminLogin={() => { setIsAdminAuth(true); navigate("admin"); }} />
           )
         ) : (
           <>
-            <Header page={page} onNav={navigate} isDark={isDark} setDark={setIsDark} cartCount={cartCount} wishCount={wishlist.length} notifCount={notifications.filter(n => n.unread).length} onSearch={() => setShowSearch(true)} />
+            <Header page={page} onNav={navigate as any} isDark={isDark} setDark={setIsDark} cartCount={cartCount} wishCount={wishlist.length} notifCount={notifications.filter(n => n.unread).length} onSearch={() => setShowSearch(true)} />
             <main className="pb-20 md:pb-0">
               <AnimatePresence mode="wait">
                 <motion.div key={page} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25, ease: "easeOut" }}>
-                  {page === "home" && <HomePage onNav={navigate} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} isDark={isDark} />}
-                  {page === "shop" && <ShopPage onNav={navigate} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} initialCategory={shopCategory} initialBrand={shopBrand} />}
+                  {page === "home" && <HomePage onNav={navigate as any} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} isDark={isDark} />}
+                  {page === "shop" && <ShopPage onNav={navigate as any} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} initialCategory={shopCategory} initialBrand={shopBrand} />}
                   {page === "product" && selectedProduct && (
                     <ProductDetailPage
                       product={selectedProduct}
-                      onNav={navigate}
+                      onNav={navigate as any}
                       onCart={addToCart}
                       wishlist={wishlist}
                       onWish={toggleWishlist}
@@ -3256,14 +3256,14 @@ export default function App() {
                       onAddReview={(rev) => addReview(selectedProduct.id, rev)}
                     />
                   )}
-                  {page === "cart" && <CartPage cart={cart} onNav={navigate} onQty={updateQty} onRemove={removeFromCart} />}
-                  {page === "checkout" && <CheckoutPage cart={cart} onNav={navigate} onPlace={placeOrder} />}
-                  {page === "success" && <OrderSuccessPage onNav={navigate} />}
-                  {page === "login" && <AuthPage mode="login" onNav={navigate} onAdminLogin={() => { setIsAdminAuth(true); navigate("admin"); }} />}
-                  {page === "register" && <AuthPage mode="register" onNav={navigate} />}
+                  {page === "cart" && <CartPage cart={cart} onNav={navigate as any} onQty={updateQty} onRemove={removeFromCart} />}
+                  {page === "checkout" && <CheckoutPage cart={cart} onNav={navigate as any} onPlace={placeOrder} />}
+                  {page === "success" && <OrderSuccessPage onNav={navigate as any} />}
+                  {page === "login" && <AuthPage mode="login" onNav={navigate as any} onAdminLogin={() => { setIsAdminAuth(true); navigate("admin"); }} />}
+                  {page === "register" && <AuthPage mode="register" onNav={navigate as any} />}
                   {page === "account" && (
                     <AccountPage
-                      onNav={navigate}
+                      onNav={navigate as any}
                       cart={cart}
                       initialTab={accountTab}
                       orders={orders}
@@ -3271,50 +3271,50 @@ export default function App() {
                       onMarkAllNotificationsRead={markAllNotificationsRead}
                     />
                   )}
-                  {page === "wishlist" && <WishlistPage wishlist={wishlist} products={products} onNav={navigate} onCart={addToCart} onWish={toggleWishlist} />}
-                  {page === "orders" && <OrdersPage onNav={navigate} orders={orders} />}
-                  {page === "tracking" && <TrackingPage onNav={navigate} />}
-                  {page === "search" && <SearchPage onNav={navigate} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} />}
-                  {page === "categories" && <SimpleContentPage title="Categories" subtitle="Browse by Type" icon={Grid} onNav={navigate} onShop={(cat) => navigate("shop", undefined, cat)} />}
-                  {page === "brands" && <SimpleContentPage title="Brands" subtitle="Premium Partners" icon={Award} onNav={navigate} onShop={(brand) => navigate("brand", undefined, undefined, brand)} />}
+                  {page === "wishlist" && <WishlistPage wishlist={wishlist} products={products} onNav={navigate as any} onCart={addToCart} onWish={toggleWishlist} />}
+                  {page === "orders" && <OrdersPage onNav={navigate as any} orders={orders} />}
+                  {page === "tracking" && <TrackingPage onNav={navigate as any} />}
+                  {page === "search" && <SearchPage onNav={navigate as any} products={products} onCart={addToCart} wishlist={wishlist} onWish={toggleWishlist} />}
+                  {page === "categories" && <SimpleContentPage title="Categories" subtitle="Browse by Type" icon={Grid} onNav={navigate as any} onShop={(cat) => navigate("shop", undefined, cat)} />}
+                  {page === "brands" && <SimpleContentPage title="Brands" subtitle="Premium Partners" icon={Award} onNav={navigate as any} onShop={(brand) => navigate("brand", undefined, undefined, brand)} />}
                   {page === "brand" && (
                     <BrandPage
                       brandName={selectedBrandName}
                       products={products}
-                      onNav={navigate}
+                      onNav={navigate as any}
                       onCart={addToCart}
                       wishlist={wishlist}
                       onWish={toggleWishlist}
                     />
                   )}
-                  {page === "about" && <SimpleContentPage title="About Us" subtitle="Our Story" icon={Users} onNav={navigate} onShop={() => navigate("shop")} />}
-                  {page === "contact" && <SimpleContentPage title="Contact Us" subtitle="Get in Touch" icon={Mail} onNav={navigate} onShop={() => navigate("shop")} />}
-                  {page === "404" && <NewNotFoundPage onNav={navigate} />}
+                  {page === "about" && <SimpleContentPage title="About Us" subtitle="Our Story" icon={Users} onNav={navigate as any} onShop={() => navigate("shop")} />}
+                  {page === "contact" && <SimpleContentPage title="Contact Us" subtitle="Get in Touch" icon={Mail} onNav={navigate as any} onShop={() => navigate("shop")} />}
+                  {page === "404" && <NewNotFoundPage onNav={navigate as any} />}
                   {page === "phones" && (
                     <MobilePhonesPage
-                      onNav={navigate}
+                      onNav={navigate as any}
                       products={products}
                       onCart={addToCart}
                       wishlist={wishlist}
                       onWish={toggleWishlist}
                     />
                   )}
-                  {page === "phone-details" && selectedProduct && <PhoneDetailsPage product={selectedProduct} onNav={navigate} onCart={addToCart} />}
-                  {page === "dashboard" && <CustomerDashboardPage onNav={navigate} />}
+                  {page === "phone-details" && selectedProduct && <PhoneDetailsPage product={selectedProduct} onNav={navigate as any} onCart={addToCart} />}
+                  {page === "dashboard" && <CustomerDashboardPage onNav={navigate as any} />}
                   {page === "invoices" && <InvoicesPage orders={orders} />}
                   {page === "notifications" && <NotificationCenter notifications={notifications} onMarkAllRead={markAllNotificationsRead} />}
-                  {page === "flashsale" && <FlashSalePage onNav={navigate} products={products} onCart={addToCart} />}
+                  {page === "flashsale" && <FlashSalePage onNav={navigate as any} products={products} onCart={addToCart} />}
                   {page === "offers" && <OffersPage />}
-                  {page === "warranty" && <WarrantyPage onNav={navigate} />}
+                  {page === "warranty" && <WarrantyPage onNav={navigate as any} />}
                   {page === "tradein" && <TradeInPage />}
                   {page === "500" && <ServerErrorPage />}
                   {page === "maintenance" && <MaintenancePage />}
                 </motion.div>
               </AnimatePresence>
             </main>
-            {!["checkout","success","login","register"].includes(page) && <Footer onNav={navigate} />}
-            <FloatingButtons onNav={navigate} cartCount={cartCount} />
-            <MobileNav page={page} onNav={navigate} />
+            {!["checkout","success","login","register"].includes(page) && <Footer onNav={navigate as any} />}
+            <FloatingButtons onNav={navigate as any} cartCount={cartCount} />
+            <MobileNav page={page} onNav={navigate as any} />
           </>
         )}
       </div>
